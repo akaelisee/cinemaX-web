@@ -1,0 +1,17 @@
+# Netlify — site public cinemaX-web
+# Dashboard : Site configuration → Environment variables (build time) :
+#   VITE_API_URL = https://cinemax-api-xc50.onrender.com   (sans slash final)
+#   VITE_STRIPE_PUBLISHABLE_KEY = pk_test_…
+# Puis : CORS_ORIGINS de l’API Render doit contenir l’URL HTTPS du site Netlify.
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
