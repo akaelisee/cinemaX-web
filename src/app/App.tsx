@@ -5,7 +5,7 @@ import { ErrorBoundary } from '@/shared/ui/ErrorBoundary';
 
 const queryClient = new QueryClient({
   defaultOptions: {
-    queries: { retry: 0, staleTime: 60_000, refetchOnWindowFocus: false },
+    queries: { retry: 1, staleTime: 60_000, refetchOnWindowFocus: false },
   },
 });
 

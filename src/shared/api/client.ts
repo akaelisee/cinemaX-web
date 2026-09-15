@@ -9,7 +9,7 @@ const apiOrigin = import.meta.env.DEV
 export const api = axios.create({
   baseURL: `${apiOrigin}/api/v1`,
   withCredentials: true,
-  timeout: 12_000,
+  timeout: 60_000,
 });
 
 api.interceptors.request.use((config) => {
@@ -69,7 +69,7 @@ export function apiErrorMessage(error: unknown): string {
       return 'Le serveur met trop longtemps à répondre. Réessaie dans un instant.';
     }
     if (!error.response) {
-      return 'Impossible de joindre le serveur. En local, lance l’API (port 3000). Si tu appelles Render directement, ajoute http://localhost:5174 à CORS_ORIGINS.';
+      return 'Impossible de joindre le serveur. Vérifie VITE_API_URL (build Netlify) et CORS_ORIGINS sur l’API (URL https du site, sans slash final).';
     }
   }
   if (error instanceof Error) return error.message;

@@ -4,6 +4,7 @@ import Wrapper from '@/styles/Wrapper.js';
 import { Card } from '@/styles/Card.js';
 import { Loader } from '@/shared/ui/Loader';
 import { fetchScreenings } from '@/features/screenings/api';
+import { apiErrorMessage } from '@/shared/api/client';
 import { uniqueMovieScreenings } from '@/features/booking/types';
 
 export function MovieRow({ title }: { title: string }) {
@@ -14,6 +15,22 @@ export function MovieRow({ title }: { title: string }) {
 
   if (query.isPending) {
     return <Loader overlay={false} />;
+  }
+
+  if (query.isError) {
+    return (
+      <Wrapper>
+        <p
+          style={{
+            textAlign: 'center',
+            fontSize: '16px',
+            color: '#ec2f4d',
+          }}
+        >
+          {apiErrorMessage(query.error)}
+        </p>
+      </Wrapper>
+    );
   }
 
   const movies = uniqueMovieScreenings(query.data?.data ?? []);
