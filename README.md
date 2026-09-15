@@ -1,6 +1,6 @@
 # cinemaX — site public
 
-Front de réservation (Vite, React 19, TypeScript, styled-components). Le visuel reprend le site Future Cinema de 2021. API : `VITE_API_URL` (préfixe `/api/v1`).
+cinemax site de réservation de place pour films (Vite, React 19, TypeScript, styled-components).
 
 ## Lancer
 
