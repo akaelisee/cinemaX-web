@@ -1,8 +1,7 @@
 # Netlify — site public cinemaX-web
-# Dashboard : Site configuration → Environment variables (build time) :
-#   VITE_API_URL = https://cinemax-api-xc50.onrender.com   (sans slash final)
-#   VITE_STRIPE_PUBLISHABLE_KEY = pk_test_…
-# Puis : CORS_ORIGINS de l’API Render doit contenir l’URL HTTPS du site Netlify.
+# Le front appelle /api (même origine). Les redirects ci-dessous proxyent vers Render,
+# donc pas besoin de VITE_API_URL au build, ni de CORS pour le catalogue.
+# Stripe : Site configuration → Environment variables → VITE_STRIPE_PUBLISHABLE_KEY
 
 [build]
   command = "npm run build"
@@ -10,6 +9,18 @@
 
 [build.environment]
   NODE_VERSION = "22"
+
+[[redirects]]
+  from = "/api/*"
+  to = "https://cinemax-api-xc50.onrender.com/api/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/health"
+  to = "https://cinemax-api-xc50.onrender.com/health"
+  status = 200
+  force = true
 
 [[redirects]]
   from = "/*"

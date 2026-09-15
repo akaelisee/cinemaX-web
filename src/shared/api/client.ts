@@ -2,12 +2,10 @@ import axios, { isAxiosError, type AxiosError, type InternalAxiosRequestConfig }
 import { getAccessToken, setAccessToken } from '@/shared/api/session';
 import type { ApiErrorBody, ApiSuccess } from '@/shared/api/types';
 
-const apiOrigin = import.meta.env.DEV
-  ? ''
-  : String(import.meta.env.VITE_API_URL ?? '').replace(/\/$/, '');
-
+// Same-origin : Vite (dev/preview) et Netlify proxyent /api vers l’API.
+// VITE_API_URL n’est pas lu ici — il sert uniquement de cible au proxy.
 export const api = axios.create({
-  baseURL: `${apiOrigin}/api/v1`,
+  baseURL: '/api/v1',
   withCredentials: true,
   timeout: 60_000,
 });
@@ -71,7 +69,10 @@ export function apiErrorMessage(error: unknown): string {
       return 'Le serveur met trop longtemps à répondre. Réessaie dans un instant.';
     }
     if (!error.response) {
-      return 'Impossible de joindre le serveur. Vérifie VITE_API_URL (build Netlify) et CORS_ORIGINS sur l’API (URL https du site, sans slash final).';
+      return 'Impossible de joindre le serveur. En local, lance l’API (cinemaX, port 3000) ou pointe VITE_API_URL vers Render, puis relance Vite.';
+    }
+    if (typeof error.response.data === 'string' && error.response.data.includes('<')) {
+      return 'Le site a reçu une page HTML à la place de l’API. Redéploie Netlify pour activer le proxy /api.';
     }
   }
   if (error instanceof Error) return error.message;
@@ -91,15 +92,31 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+function asApiPayload(response: { data: unknown }): unknown {
+  const payload = response.data;
+  if (typeof payload === 'string') {
+    const trimmed = payload.trim();
+    if (trimmed.startsWith('<') || trimmed.startsWith('<!')) {
+      throw invalidApiBody();
+    }
+    try {
+      return JSON.parse(trimmed) as unknown;
+    } catch {
+      throw invalidApiBody();
+    }
+  }
+  return payload;
+}
+
 function invalidApiBody(): Error {
   return new Error(
-    'Réponse API invalide. En local, lance l’API sur :3000. Sur Netlify, VITE_API_URL doit pointer vers l’API Render (rebuild après).',
+    'Le front n’a pas reçu le JSON de l’API (souvent la page du site à la place). Relance Vite, et sur Netlify redéploie pour le proxy /api.',
   );
 }
 
 export async function unwrap<T>(promise: Promise<{ data: ApiSuccess<T> }>): Promise<T> {
   const response = await promise;
-  const payload = response.data as unknown;
+  const payload = asApiPayload(response);
   if (!isRecord(payload) || !('data' in payload) || payload.data === undefined) {
     throw invalidApiBody();
   }
@@ -110,7 +127,7 @@ export async function unwrapList<T>(
   promise: Promise<{ data: ApiSuccess<T[]> & { meta: { page: number; perPage: number; total: number } } }>,
 ): Promise<{ data: T[]; meta: { page: number; perPage: number; total: number } }> {
   const response = await promise;
-  const payload = response.data as unknown;
+  const payload = asApiPayload(response);
   const rows = Array.isArray(payload)
     ? payload
     : isRecord(payload) && Array.isArray(payload.data)

@@ -18,5 +18,12 @@ export default defineConfig(({ mode }) => {
         '/health': { target: apiTarget, changeOrigin: true },
       },
     },
+    preview: {
+      port: 4174,
+      proxy: {
+        '/api': { target: apiTarget, changeOrigin: true, cookieDomainRewrite: 'localhost' },
+        '/health': { target: apiTarget, changeOrigin: true },
+      },
+    },
   };
 });
