@@ -27,7 +27,9 @@ async function tryRefresh(): Promise<boolean> {
   refreshPromise = api
     .post<ApiSuccess<{ accessToken: string }>>('/auth/refresh')
     .then((response) => {
-      setAccessToken(response.data.data.accessToken);
+      const token = response.data?.data?.accessToken;
+      if (!token) return false;
+      setAccessToken(token);
       return true;
     })
     .catch(() => {
@@ -85,18 +87,43 @@ export function conflictSeats(error: unknown): number[] {
     .filter((seat): seat is number => typeof seat === 'number');
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function invalidApiBody(): Error {
+  return new Error(
+    'Réponse API invalide. En local, lance l’API sur :3000. Sur Netlify, VITE_API_URL doit pointer vers l’API Render (rebuild après).',
+  );
+}
+
 export async function unwrap<T>(promise: Promise<{ data: ApiSuccess<T> }>): Promise<T> {
   const response = await promise;
-  return response.data.data;
+  const payload = response.data as unknown;
+  if (!isRecord(payload) || !('data' in payload) || payload.data === undefined) {
+    throw invalidApiBody();
+  }
+  return payload.data as T;
 }
 
 export async function unwrapList<T>(
   promise: Promise<{ data: ApiSuccess<T[]> & { meta: { page: number; perPage: number; total: number } } }>,
 ): Promise<{ data: T[]; meta: { page: number; perPage: number; total: number } }> {
   const response = await promise;
-  const payload = response.data;
-  return {
-    data: payload.data,
-    meta: payload.meta ?? { page: 1, perPage: payload.data.length, total: payload.data.length },
-  };
+  const payload = response.data as unknown;
+  const rows = Array.isArray(payload)
+    ? payload
+    : isRecord(payload) && Array.isArray(payload.data)
+      ? payload.data
+      : null;
+  if (!rows) throw invalidApiBody();
+  const meta =
+    isRecord(payload) && isRecord(payload.meta)
+      ? {
+          page: Number(payload.meta.page) || 1,
+          perPage: Number(payload.meta.perPage) || rows.length,
+          total: Number(payload.meta.total) || rows.length,
+        }
+      : { page: 1, perPage: rows.length, total: rows.length };
+  return { data: rows as T[], meta };
 }

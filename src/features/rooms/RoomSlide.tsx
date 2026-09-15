@@ -26,7 +26,7 @@ export function RoomSlide({ rooms }: { rooms: Room[] }) {
     setNavReady(true);
   }, []);
 
-  if (!rooms.length) return null;
+  if (!rooms?.length) return null;
 
   return (
     <SlideSwiper>
@@ -43,7 +43,7 @@ export function RoomSlide({ rooms }: { rooms: Room[] }) {
           effect="fade"
           fadeEffect={{ crossFade: true }}
           speed={700}
-          loop={rooms.length > 1}
+          rewind={rooms.length > 1}
           preventClicks={false}
           preventClicksPropagation={false}
           autoplay={{ delay: 5500, disableOnInteraction: false, pauseOnMouseEnter: true }}

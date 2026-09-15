@@ -53,9 +53,9 @@ export function screeningToProgramme(screening: Screening): ProgrammeView {
   };
 }
 
-export function uniqueMovieScreenings(screenings: Screening[]): Screening[] {
+export function uniqueMovieScreenings(screenings: Screening[] | undefined): Screening[] {
   const byMovie = new Map<string, Screening>();
-  const sorted = [...screenings].sort((a, b) => a.startsAt.localeCompare(b.startsAt));
+  const sorted = [...(screenings ?? [])].sort((a, b) => a.startsAt.localeCompare(b.startsAt));
   for (const screening of sorted) {
     if (!byMovie.has(screening.movieId)) byMovie.set(screening.movieId, screening);
   }

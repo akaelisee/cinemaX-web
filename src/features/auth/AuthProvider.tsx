@@ -13,6 +13,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     void (async () => {
       try {
         const session = await refresh();
+        if (!session?.accessToken || !session.user) throw new Error('session');
         setAccessToken(session.accessToken);
         setUser(session.user);
       } catch {
